@@ -38,7 +38,7 @@ while [ $count -lt $cycles_count ]; do
       echo $(date +%Y-%m-%d_%H-%M-%S) "plotting $log_name"
       screen -dmS plot$log_name -L -Logfile $log_path/$log_name.log bash \
         -c "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -t $temp_path -2 $next_store -d $next_store"
-      sleep 2
+      sleep 30
     done
     count=$(($count+1))
   fi
@@ -63,7 +63,7 @@ while [ $count -lt $cycles_count ]; do
       echo $(date +%Y-%m-%d_%H-%M-%S) "plotting $log_name"
       screen -dmS plot$log_name -L -Logfile $log_path/$log_name.log bash \
         -c "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -t $temp_path -2 $next_store -d $next_store"
-      sleep 2
+      sleep 30
     done
     count=$(($count+1))
   fi
