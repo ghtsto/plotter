@@ -1,0 +1,32 @@
+--
+# number of plotting processes to run in parallel
+processes: 5
+
+# total number of plotting cycles; minimum 1
+cycles:
+  count: 10
+  stagger:
+    # start next cycle after phase 3 or set minutes (not implemented)
+    # phase3: true
+    # minutes: 60
+
+chia_path: /home/chia/chia
+
+log_path: ./logs
+
+# temp plotting directory
+temp_path: /plots/temp
+
+# -2 and -d destination directories
+destinations:
+  - /store1/plots
+  - /store2/plots
+  - /store3/plots
+  - /store4/plots
+
+chia_conf:
+  k: 32
+  e: true
+  u: 128
+  b: 4000
+  r: 4
