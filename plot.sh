@@ -44,7 +44,7 @@ while [ $count -lt $cycles_count ]; do
   fi
 
   # when the latest log has hit phase 3, start a new cycle
-  if [ -f "$log_path/$last_log" ] && grep -Fxq "Starting phase 3/4" "$log_path/$last_log"; then
+  if [ -f "$log_path/$last_log" ] && grep -qm1 "Starting phase 3/4" "$log_path/$last_log"; then
     echo $(date +%Y-%m-%d_%H-%M-%S) "starting new cycle"
     for (( p=1; p <= $processes; p++ )); do
       last_log=$(ls -t $log_path | sort -r | head -n1)
