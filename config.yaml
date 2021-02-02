@@ -1,10 +1,10 @@
 --
 # number of plotting processes to run in parallel
-processes: 5
+processes: 10
 
 # total number of plotting cycles; minimum 1
 cycles:
-  count: 10
+  count: 1
   stagger:
     # start next cycle after phase 3 or set minutes (not implemented)
     # phase3: true
@@ -28,5 +28,5 @@ chia_conf:
   k: 32
   e: true
   u: 128
-  b: 4000
+  b: 4500
   r: 4
