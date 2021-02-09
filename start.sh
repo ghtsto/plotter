@@ -1,3 +1,5 @@
 #!/bin/bash
 
-screen -dmS plotter -L -Logfile ./plotter.log bash -c "./plot.sh"
+/usr/local/bin/tmuxinator start -p tmuxinator.yml
+
+./plot.sh | tee -a ./plotter.log

@@ -29,50 +29,83 @@ get_next_store() {
   done
 }
 
-start_process() {
-  screen -dmS plot$1 -L -Logfile $log_path/$1.log bash \
-    -c "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -t $temp_path -2 $2 -d $2"
+get_log_name() {
+  echo "$(($1+1))_$(printf "%02g" $2)_$(date +%Y-%m-%d_%H-%M-%S).log"
 }
+
+start_plotting() {
+  tmux new -d -s "cycle_$1_plot_$2"
+  tmux send-keys -t "cycle_$1_plot_$2" \
+    "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -t $temp_path -2 $3 -d $3 | tee $log_path/$4" ENTER
+  sleep 5
+}
+
+# get available space on each destination
+for i in "${!destinations[@]}"; do
+  store_space+=($(($(stat -f --format="%a*%S" ${destinations[$i]}))),${destinations[$i]})
+done
+
+# sort destination space in descending order
+IFS=$'\n' sorted_store_space=($(sort -r <<<"${store_space[*]}"))
+unset IFS
 
 count=0
 while [ $count -lt $cycles_count ]; do
-  last_log=$(ls -t $log_path | sort -r | head -n1)
-  # if there's no logs, start from the beginning
-  if ! [[ -n $last_log ]]; then
-    echo $(date +%Y-%m-%d_%H-%M-%S) "starting new cycle"
-    next_store=${destinations[0]}
-    for (( p=1; p <= $processes; p++ )); do
-      # check if logs exist now
-      last_log=$(ls -t $log_path | sort -r | head -n1)
-      if [ -f "$log_path/$last_log" ]; then
-        # get the last store destination used
+  if [ $(ls $log_path/*.log 2>/dev/null | wc -l) -eq 0 ] && [ $count = 0 ]; then
+    echo "$(date +%Y-%m-%d_%H-%M-%S) starting cycle 1"
+    for (( process=1; process <= $processes; process++ )); do
+      last_log=$(ls -t -Icompleted $log_path | sort -r | head -n1)
+
+      if ! [[ -n $last_log ]]; then
+        # when no log to read the previous store, set it to the store with the most space
+        next_store=$(sed -e 's#.*,\(\)#\1#' <<< "${sorted_store_space[0]}")
+      else
         previous_store=$(get_previous_store ${last_log}) || true
-        next_store=$(get_next_store ${previous_store})      
+        next_store=$(get_next_store ${previous_store})
       fi
-      log_name=$(printf "%06g" $p)
-      echo $(date +%Y-%m-%d_%H-%M-%S) "plotting $log_name"
-      start_process ${log_name} ${next_store}
-      sleep 30
+
+      echo "starting process $process"
+
+      log=$(get_log_name $count $process)
+
+      start_plotting $(($count+1)) $process $next_store $log
+
+      # immediately attach to the first cycle's processes to the tmux split view
+      tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER
     done
     count=$(($count+1))
+  elif [ $count = 0 ]; then
+    # when the script first runs, move old logs to completed directory
+    mv $log_path/*.log $log_path/completed/
   fi
-
-  # when the latest log has hit phase 3, start a new cycle
-  if [ -f "$log_path/$last_log" ] && grep -qm1 "Starting phase 3/4" "$log_path/$last_log"; then
-    echo $(date +%Y-%m-%d_%H-%M-%S) "starting new cycle"
-    for (( p=1; p <= $processes; p++ )); do
-      last_log=$(ls -t $log_path | sort -r | head -n1)
-      last_log_increment=$(echo "${last_log}" | sed -e 's:^0*::' | cut -f 1 -d '.')
-      new_log_increment=$(($last_log_increment+1))
-      log_name=$(printf "%06g" $new_log_increment)
+  
+  # when the current running processes all reach phase 4, start the next plotting cycle
+  phase4=$(grep -Eo "Starting phase 4/4" $log_path/${count}_*.log 2>/dev/null | wc -l)
+  if [ $phase4 -eq $processes ]; then
+    echo "$(date +%Y-%m-%d_%H-%M-%S) starting cycle $(($count+1))"
+    for (( process=1; process <= $processes; process++ )); do
+      last_log=$(ls -t -Icompleted $log_path | sort -r | head -n1)
+      
       previous_store=$(get_previous_store ${last_log}) || true
       next_store=$(get_next_store ${previous_store})
-      echo $(date +%Y-%m-%d_%H-%M-%S) "plotting $log_name"
-      start_process ${log_name} ${next_store}
-      sleep 30
+
+      echo "starting process $process"
+
+      log=$(get_log_name $count $process)
+
+      start_plotting $(($count+1)) $process $next_store $log
     done
+
+    while [ $(grep -Eo "Created a total of" $log_path/${count}_*.log 2>/dev/null | wc -l) -lt $processes ]; do
+      sleep 5
+    done
+
+    for (( process=1; process <= $processes; process++ )); do
+      tmux kill-window -t "cycle_$(($count))_plot_${process}"
+      tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER; sleep 1
+    done
+
     count=$(($count+1))
   fi
-
-  sleep 5
+  sleep 1
 done

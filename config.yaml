@@ -4,15 +4,11 @@ processes: 10
 
 # total number of plotting cycles; minimum 1
 cycles:
-  count: 1
-  stagger:
-    # start next cycle after phase 3 or set minutes (not implemented)
-    # phase3: true
-    # minutes: 60
+  count: 20
 
 chia_path: /home/chia/chia
 
-log_path: ./logs
+log_path: /home/chia/plotter/logs
 
 # temp plotting directory
 temp_path: /plots/temp
