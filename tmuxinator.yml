@@ -1,0 +1,29 @@
+name: chia
+root: /home/chia
+
+attach: false
+
+windows:
+  - status:
+      layout: 8b71,280x70,0,0[280x35,0,0{140x35,0,0,10,139x35,141,0,12},280x34,0,36,11]
+      panes:
+        - watch -n1 'sensors -A 2> /dev/null | grep -A 8 "k10temp"; lscpu | grep "MHz"'
+        - iostat -h -t 1 -p /dev/dm-2 /dev/sda /dev/sdb /dev/sdc /dev/sdd
+        - htop
+  - plotting:
+      layout: 2f29,280x70,0,0{51x70,0,0[51x35,0,0,1,51x34,0,36,16],61x70,52,0[61x35,52,0,12,61x34,52,36,17],59x70,114,0[59x35,114,0,11,59x34,114,36,13],57x70,174,0[57x35,174,0,9,57x34,174,36,14],48x70,232,0[48x35,232,0,8,48x34,232,36,15]}
+      panes:
+        - TMUX='' tmux new -s plot_1
+        - TMUX='' tmux new -s plot_2
+        - TMUX='' tmux new -s plot_3
+        - TMUX='' tmux new -s plot_4
+        - TMUX='' tmux new -s plot_5
+        - TMUX='' tmux new -s plot_6
+        - TMUX='' tmux new -s plot_7
+        - TMUX='' tmux new -s plot_8
+        - TMUX='' tmux new -s plot_9
+        - TMUX='' tmux new -s plot_10
+  - farming:
+      layout: main-vertical
+      panes:
+        - tail -F /home/chia/.chia/beta-1.0b26/log/debug.log | grep -E 'plots were eligible|coin|🍀|ERROR' | grep -v '0 plots were'
