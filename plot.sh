@@ -72,6 +72,8 @@ while [ $count -lt $cycles_count ]; do
 
       # immediately attach to the first cycle's processes to the tmux split view
       tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER
+
+      sleep 30
     done
     count=$(($count+1))
   elif [ $count = 0 ]; then
@@ -94,12 +96,17 @@ while [ $count -lt $cycles_count ]; do
       log=$(get_log_name $count $process)
 
       start_plotting $(($count+1)) $process $next_store $log
+      
+      sleep 30
     done
 
-    while [ $(grep -Eo "Created a total of" $log_path/${count}_*.log 2>/dev/null | wc -l) -lt $processes ]; do
+    # sleep until the previous cycle has finished
+    while [ $(grep -Eo "Renamed final file" $log_path/${count}_*.log 2>/dev/null | wc -l) -lt $processes ]; do
       sleep 5
     done
 
+    # kill previous cycle windows and attach new cycle windows to long running plot_x windows
+    sleep 10
     for (( process=1; process <= $processes; process++ )); do
       tmux kill-window -t "cycle_$(($count))_plot_${process}"
       tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER; sleep 1
