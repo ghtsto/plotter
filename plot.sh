@@ -30,7 +30,7 @@ get_next_store() {
 }
 
 get_log_name() {
-  echo "$(($1+1))_$(printf "%02g" $2)_$(date +%Y-%m-%d_%H-%M-%S).log"
+  echo "$(printf "%02g" $(($1+1)))_$(printf "%02g" $2)_$(date +%Y-%m-%d_%H-%M-%S).log"
 }
 
 start_plotting() {
@@ -46,7 +46,7 @@ for i in "${!destinations[@]}"; do
 done
 
 # sort destination space in descending order
-IFS=$'\n' sorted_store_space=($(sort -r <<<"${store_space[*]}"))
+IFS=$'\n' sorted_store_space=($(sort -nr <<<"${store_space[*]}"))
 unset IFS
 
 count=0
@@ -108,8 +108,10 @@ while [ $count -lt $cycles_count ]; do
     # kill previous cycle windows and attach new cycle windows to long running plot_x windows
     sleep 10
     for (( process=1; process <= $processes; process++ )); do
-      tmux kill-window -t "cycle_$(($count))_plot_${process}"
-      tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER; sleep 1
+      tmux kill-window -t "cycle_${count}_plot_${process}"
+      sleep 5
+      tmux send-keys -t "plot_${process}" "TMUX='' tmux a -t cycle_$(($count+1))_plot_${process}" ENTER
+      sleep 5
     done
 
     count=$(($count+1))
