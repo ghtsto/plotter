@@ -5,7 +5,7 @@ attach: false
 
 windows:
   - status:
-      layout: 8b71,280x70,0,0[280x35,0,0{140x35,0,0,10,139x35,141,0,12},280x34,0,36,11]
+      layout: eeab,280x70,0,0[280x21,0,0{143x21,0,0,0,136x21,144,0,3},280x48,0,22,4]
       panes:
         - watch -n1 'sensors -A 2> /dev/null | grep -A 8 "k10temp"; lscpu | grep "MHz"'
         - iostat -h -t 1 -p /dev/dm-2 /dev/sda /dev/sdb /dev/sdc /dev/sdd
@@ -24,6 +24,8 @@ windows:
         - TMUX='' tmux new -s plot_9
         - TMUX='' tmux new -s plot_10
   - farming:
-      layout: main-vertical
+      layout: 252b,280x70,0,0{192x70,0,0,2,87x70,193,0[87x35,193,0,18,87x34,193,36,29]}
       panes:
-        - tail -F /home/chia/.chia/beta-1.0b26/log/debug.log | grep -E 'plots were eligible|coin|🍀|ERROR' | grep -v '0 plots were'
+        - tail -F /home/chia/.chia/beta-1.0b27/log/debug.log | grep -E 'plots were eligible|coin|🍀|ERROR' | grep -v '0 plots were'
+        - cd /home/chia/chia; . ./activate; watch -n10 'chia show -s'
+        - cd /home/chia/chia; . ./activate; watch -n60 'chia wallet show'
