@@ -15,14 +15,30 @@ temp_path: /plots/temp
 
 # -2 and -d destination directories
 destinations:
-  - /store1/plots
-  - /store2/plots
-  - /store3/plots
-  - /store4/plots
+#  - /store1/plots
+#  - /store2/plots
+#  - /store3/plots
+#  - /store4/plots
+#  - /store5/plots
+#  - /store6/plots
+#  - /store7/plots
+#  - /store8/plots
+#  - /store9/plots
+#  - /home/chia/
+#  - /ext-store1/plots
+#  - /ext-store2/plots
+#  - /ext-store3/plots
+#  - /store10/plots
+  - /ext-store4
+  - /ext-store5
+  - /ext-store6
 
 chia_conf:
   k: 32
-  e: true
+  override_k: false
+  e: false
   u: 128
-  b: 4500
+  b: 3389
   r: 4
+  f: ''
+  p: ''

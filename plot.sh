@@ -36,8 +36,12 @@ get_log_name() {
 start_plotting() {
   tmux new -d -s "cycle_$1_plot_$2"
   tmux send-keys -t "cycle_$1_plot_$2" \
-    "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -t $temp_path -2 $3 -d $3 | tee $log_path/$4" ENTER
-  sleep 5
+    "cd $chia_path; . ./activate; chia plots create -k $chia_conf_k $([[ $chia_conf_override_k == "true" ]] && printf "%s\n" "--override-k") $([[ $chia_conf_e == "true" ]] && printf "%s\n" "-e") -u $chia_conf_u -b $chia_conf_b -r $chia_conf_r -f $chia_conf_f -p $chia_conf_p -t $temp_path -2 $3 -d $3 | tee $log_path/$4" ENTER
+  sleep 15m
+}
+
+prev_cycle_n_process_done() {
+  grep -Eo "Renamed final file" $log_path/$(printf "%02g" $1)_$(printf "%02g" $2)*.log 2>/dev/null | wc -l
 }
 
 # get available space on each destination
@@ -80,14 +84,19 @@ while [ $count -lt $cycles_count ]; do
     # when the script first runs, move old logs to completed directory
     mv $log_path/*.log $log_path/completed/
   fi
-  
-  # when the current running processes all reach phase 4, start the next plotting cycle
-  phase4=$(grep -Eo "Starting phase 4/4" $log_path/${count}_*.log 2>/dev/null | wc -l)
-  if [ $phase4 -eq $processes ]; then
+
+  # check for when the first process from the previous cycle finishes
+  first_process_prev_cycle_finished=$(grep -Eo "Renamed final file" $log_path/$(printf "%02g" $count)_01*.log 2>/dev/null | wc -l)
+  if [ $first_process_prev_cycle_finished -eq 1 ]; then
     echo "$(date +%Y-%m-%d_%H-%M-%S) starting cycle $(($count+1))"
     for (( process=1; process <= $processes; process++ )); do
+      # wait for $process from previous cycle to finish
+      while [ $(prev_cycle_n_process_done $count $process) -eq 0 ]; do
+        sleep 5
+      done
+
       last_log=$(ls -t -Icompleted $log_path | sort -r | head -n1)
-      
+
       previous_store=$(get_previous_store ${last_log}) || true
       next_store=$(get_next_store ${previous_store})
 
@@ -96,13 +105,8 @@ while [ $count -lt $cycles_count ]; do
       log=$(get_log_name $count $process)
 
       start_plotting $(($count+1)) $process $next_store $log
-      
-      sleep 30
-    done
 
-    # sleep until the previous cycle has finished
-    while [ $(grep -Eo "Renamed final file" $log_path/${count}_*.log 2>/dev/null | wc -l) -lt $processes ]; do
-      sleep 5
+      sleep 30
     done
 
     # kill previous cycle windows and attach new cycle windows to long running plot_x windows
