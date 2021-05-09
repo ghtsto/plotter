@@ -4,3 +4,5 @@ logs
 old
 history
 test.sh
+config.yaml
+tmuxinator.yml
