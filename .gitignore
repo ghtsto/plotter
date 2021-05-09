@@ -3,3 +3,6 @@ logs
 *.log
 old
 history
+test.sh
+config.yaml
+tmuxinator.yml
